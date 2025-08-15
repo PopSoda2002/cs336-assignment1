@@ -138,7 +138,7 @@ class BPETokenizer:
             self.decode_vocab[next_token_id] = next_token
             time_merge_pair_start = time.time()
             for node in dll_vector:
-                deltas = node.merge_pair_and_get_deltas(most_common_pair[0])  # {pair: delta_count}，delta 可正可负
+                deltas = node.merge_pair_and_get_deltas(most_common_pair[0])
                 if not deltas:
                     continue
                 w = node.freq
