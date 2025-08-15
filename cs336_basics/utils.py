@@ -1,4 +1,5 @@
 from typing import Optional
+from collections import defaultdict
 
 class Node:
     def __init__(self, val: Optional[bytes]):
@@ -29,25 +30,46 @@ class DoublyLinkedList:
         self.size += 1
         return
 
-    def merge_pair(self, pair: tuple[bytes, bytes]) -> list[tuple[bytes, bytes]]:
-        cur = self.head
-        merged = False
-        new_pairs = []
-        while cur.next.val is not None:
-            cur = cur.next
-            if cur.val == pair[0] and cur.next.val == pair[1]:
-                cur.val = pair[0] + pair[1]
+    def merge_pair_and_get_deltas(self, pair: tuple[bytes, bytes]) -> dict[tuple[bytes, bytes], int]:
+        """
+        把所有 (A,B) 合并为 AB 返回相邻对频次的差分
+        -1: (prev,A)、(A,B)、(B,next) +1: (prev,AB)、(AB,next)
+        """
+        A, B = pair
+        deltas = defaultdict(int)
+        cur = self.head.next
+
+        while cur is not self.tail and cur.next is not self.tail:
+            if cur.val == A and cur.next.val == B:
+                left = cur.prev.val if cur.prev is not self.head else None
+                right = cur.next.next.val if cur.next.next is not self.tail else None
+
+                # 旧对减少
+                if left is not None:
+                    deltas[(left, A)] -= 1
+                deltas[(A, B)] -= 1
+                if right is not None:
+                    deltas[(B, right)] -= 1
+
+                # 合并为 AB
+                cur.val = A + B
                 to_remove = cur.next
                 cur.next = to_remove.next
                 cur.next.prev = cur
-                del to_remove
                 self.size -= 1
-                merged = True
-                if cur.next.val is not None:
-                    new_pairs.append((cur.val, cur.next.val))
-                if cur.prev.val is not None:
-                    new_pairs.append((cur.val, cur.prev.val))
-        return new_pairs
+                # del to_remove   # 非必须
+
+                # 新对增加
+                if left is not None:
+                    deltas[(left, cur.val)] += 1
+                if right is not None:
+                    deltas[(cur.val, right)] += 1
+
+                # 合并后，cur 继续向右扫描，不回退
+            else:
+                cur = cur.next
+
+        return deltas
 
     def __iter__(self):
         cur = self.head.next
@@ -58,10 +80,11 @@ class DoublyLinkedList:
     def __str__(self) -> str:
         return "[" + ", ".join(repr(b) for b in self) + "]"
 
-    def get_pair(self) -> tuple[bytes, bytes]:
+    def get_pairs(self) -> list[tuple[bytes, bytes]]:
         cur = self.head
+        res = []
         while cur.next.val is not None:
             cur = cur.next
             if cur.val is not None and cur.next.val is not None:
-                return (cur.val, cur.next.val)
-        return None
+                res.append((cur.val, cur.next.val))
+        return res

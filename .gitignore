@@ -163,3 +163,4 @@ cython_debug/
 *.zip
 
 data/
+cs336_basics/try.py
