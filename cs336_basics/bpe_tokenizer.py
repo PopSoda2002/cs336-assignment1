@@ -127,18 +127,18 @@ class BPETokenizer:
         time_get_pair_time = 0
         for i in tqdm(range(self.merge_count), desc="Training BPE"):
             time_start_get_pair = time.time()
-            most_common_pair = max(pair_map.items(), key=lambda x: (x[1], x[0]))
+            most_common_pair, count = max(pair_map.items(), key=lambda x: (x[1], x[0]))
             time_get_pair_end = time.time()
             time_get_pair_time += time_get_pair_end - time_start_get_pair
-            del pair_map[most_common_pair[0]]
-            self.merges.append(most_common_pair[0])
-            next_token = most_common_pair[0][0] + most_common_pair[0][1]
+            pair_map.pop(most_common_pair)
+            self.merges.append(most_common_pair)
+            next_token = most_common_pair[0] + most_common_pair[1]
             next_token_id = len(self.encode_vocab)
             self.encode_vocab[next_token] = next_token_id
             self.decode_vocab[next_token_id] = next_token
             time_merge_pair_start = time.time()
             for node in dll_vector:
-                deltas = node.merge_pair_and_get_deltas(most_common_pair[0])
+                deltas = node.merge_pair_and_get_deltas(most_common_pair)
                 if not deltas:
                     continue
                 w = node.freq
