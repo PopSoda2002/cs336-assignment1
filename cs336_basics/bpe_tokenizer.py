@@ -26,18 +26,18 @@ class BPETokenizer:
         return cls(vocab, merges, special_tokens)
 
     def _bpe_ids_for_bytes(self, blob: bytes) -> list[int]:
-        # 把字节序列变成 token 列表，每个 token 初始为单字节
+        # Convert the byte sequence into a list of tokens, with each token initialized as a single byte.
         word = [bytes([b]) for b in blob]
         if len(word) <= 1:
             return [self.encode_vocab[word[0]]] if word else []
 
         def get_pairs(seq):
-            # 返回相邻对集合
+            # Return a set of adjacent pairs.
             return {(seq[i], seq[i+1]) for i in range(len(seq)-1)}
 
         pairs = get_pairs(word)
         while True:
-            # 选 rank 最小的可合并对
+            # Select the mergeable pair with the lowest rank.
             best = None
             best_rank = None
             for p in pairs:
@@ -71,7 +71,8 @@ class BPETokenizer:
         if not text:
             return out_ids
 
-        # 若有特殊符号，按“最长优先”切分并保留命中；否则只处理整段文本
+        # If there are special tokens, split the text by the longest token first and keep the matches;
+        # otherwise, process the entire text as a single segment.
         if getattr(self, "special_tokens", None):
             specials = sorted(self.special_tokens, key=len, reverse=True)
             special_re = re.compile("(" + "|".join(re.escape(s) for s in specials) + ")")
@@ -83,7 +84,7 @@ class BPETokenizer:
             if not piece:
                 continue
 
-            # 命中特殊符号：直接查表输出
+            # If a special token is matched, look it up in the table and output directly.
             if getattr(self, "special_tokens", None) and piece in self.special_tokens:
                 b = piece.encode("utf-8")
                 tid = self.encode_vocab.get(b)
@@ -92,7 +93,8 @@ class BPETokenizer:
                 out_ids.append(tid)
                 continue
 
-            # 普通文本：先按 GPT-2 PAT 预分词，再对每个子片段做 BPE 合并
+            # For regular text, first pre-tokenize using the GPT-2 pattern,
+            # then perform BPE merging on each sub-segment.
             for m in re.finditer(self.PAT, piece):
                 sub = m.group(0)
                 if not sub:
@@ -123,4 +125,3 @@ if __name__ == "__main__":
     vocab, merges = bpe_trainer.decode_vocab, bpe_trainer.merges
     tokenizer = BPETokenizer(vocab, merges, special_tokens=["<|endoftext|>"])
     print(tokenizer.encode("Hello, world!"))
-    # print(tokenizer.decode([1, 2, 3]))
