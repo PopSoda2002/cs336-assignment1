@@ -70,6 +70,21 @@ class DoublyLinkedList:
                 cur = cur.next
 
         return deltas
+    
+    def expand_pair(self, merge: tuple[bytes, bytes]) -> None:
+        A, B = merge
+        cur = self.head.next
+        while cur is not self.tail and cur.next is not self.tail:
+            if cur.val == A + B:
+                left_node = Node(A)
+                left_node.prev = cur.prev
+                left_node.next = cur
+                cur.prev.next = left_node
+                cur.prev = left_node
+                cur.val = B
+                self.size += 1
+            cur = cur.next
+        return None
 
     def __iter__(self):
         cur = self.head.next

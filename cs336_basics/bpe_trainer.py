@@ -9,13 +9,13 @@ import time
 from cs336_basics.utils import DoublyLinkedList
 
 class BPETrainer:
-    def __init__(self, input_path: str, vocab_size: int, special_tokens: list[str], pretokenized_words_path: str):
+    def __init__(self, input_path: str, vocab_size: int, special_tokens: list[str], **kwargs):
         self.input_path = input_path
         self.vocab_size = vocab_size
         self.special_tokens = special_tokens
         self.PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
         self.pretokenized_words = defaultdict(int)
-        self.pretokenized_words_path = pretokenized_words_path
+        self.pretokenized_words_path = kwargs.get("pretokenized_words_path", None)
         self.chunk_boundaries = []
         self.encode_vocab = {}
         self.decode_vocab = {}
@@ -33,7 +33,8 @@ class BPETrainer:
             self.input_file = input_file
             self.chunk_boundaries = self._find_chunk_boundaries_v2(desired_num_chunks=100, split_special_token=self.special_tokens[0].encode("utf-8"))
             print("finished finding chunk boundaries, length: ", len(self.chunk_boundaries))
-            self._save_pretokenized_words(self.pretokenized_words_path)
+            if self.pretokenized_words_path is not None:
+                self._save_pretokenized_words(self.pretokenized_words_path)
 
     def _find_chunk_boundaries_v2(
         self,
